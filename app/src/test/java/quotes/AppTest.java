@@ -4,11 +4,16 @@
 package quotes;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,4 +30,38 @@ class AppTest {
         assertFalse(Arrays.asList(quotesArray).contains(quote1));
         assertEquals("{\"author\":\"Marilyn Monroe\",\"text\": “I am good, but not an angel. I do sin, but I am not the devil. I am just a small girl in a big world trying to find someone to love.” }",quotesArray[0].toString());
     }
+    @Test void testApi() throws IOException {
+        Gson gson = new Gson();
+        URL url = new URL("http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=en");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+
+            InputStream inputStream = connection.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader input = new BufferedReader(inputStreamReader);
+            String quote = input.readLine();
+            ApiQuotes newQuote = gson.fromJson(quote, ApiQuotes.class);
+            System.out.println(newQuote);
+            try {
+                Object obj = JsonParser.parseReader(new FileReader("/Users/macbookpro/projects/401/quotes/app/src/main/resources/Data.json"));
+                JsonArray jsonArray = (JsonArray)obj;
+                JsonObject quoteToAdd =  new JsonObject();
+                quoteToAdd.addProperty("author",newQuote.getQuoteAuthor());
+                quoteToAdd.addProperty("quote",newQuote.getQuoteText());
+                jsonArray.add(quoteToAdd);
+                System.out.println(jsonArray.get(jsonArray.size()-1));
+
+                FileWriter file = new FileWriter("/Users/macbookpro/projects/401/quotes/app/src/main/resources/Data.json");
+                file.write(jsonArray.toString());
+                file.flush();
+                file.close();
+                assertTrue(jsonArray.contains(quoteToAdd));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+    }
+
+
 }
