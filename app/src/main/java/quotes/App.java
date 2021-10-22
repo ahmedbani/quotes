@@ -4,18 +4,82 @@
 package quotes;
 
 import com.google.gson.Gson;
-
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class App {
 
     public static void main(String[] args) {
-        String text = "{\"author\":\"ahmed\",\"text\":\"adfafaf\"}";
         Gson gson = new Gson();
         try {
+            URL url = new URL("http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=en");
+            // open connection
+            HttpURLConnection connection = openConnection(url);
+            System.out.println(connection.getResponseMessage());
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                // get stream
+                BufferedReader input = stream(connection);
+                // read from API
+                String quote = input.readLine();
+                ApiQuotes newQuote = gson.fromJson(quote, ApiQuotes.class);
+                System.out.println(newQuote);
+                // add the response to the data.json file
+                addToFile(newQuote);
+            }
+            else {
+                // read data randomly from data.json file
+                readFromFile();
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    static HttpURLConnection openConnection(URL url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+        return connection;
+    }
+    static BufferedReader stream(HttpURLConnection connection) throws IOException {
+        InputStream inputStream = connection.getInputStream();
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader input = new BufferedReader(inputStreamReader);
+        return input;
+    }
+
+    static void addToFile(ApiQuotes newQuote){
+        try {
+            Object obj = JsonParser.parseReader(new FileReader("/Users/macbookpro/projects/401/quotes/app/src/main/resources/Data.json"));
+            JsonArray jsonArray = (JsonArray)obj;
+            JsonObject quoteToAdd =  new JsonObject();
+            quoteToAdd.addProperty("author",newQuote.getQuoteAuthor());
+            quoteToAdd.addProperty("quote",newQuote.getQuoteText());
+            jsonArray.add(quoteToAdd);
+
+            FileWriter file = new FileWriter("/Users/macbookpro/projects/401/quotes/app/src/main/resources/Data.json");
+            file.write(jsonArray.toString());
+            file.flush();
+            file.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void readFromFile(){
+        try {
             Reader reader = new FileReader("/Users/macbookpro/projects/401/quotes/app/src/main/resources/data.json");
+            Gson gson = new Gson();
             Quotes[] quotesArray = gson.fromJson(reader,Quotes[].class);
             System.out.println(quotesArray.length);
             int min = 0;

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class Quotes {
     private String author;
     private String text;
+    private String quote;
 
     public Quotes(String author, String text) {
         this.author = author;
@@ -34,7 +35,7 @@ public class Quotes {
     public String toString() {
         return "{" +
                 "\"author\":\"" + author + '\"' +
-                ",\"text\":" + text +
+                ",\"quote\":" + text +
                 "}";
     }
 }
