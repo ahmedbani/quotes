@@ -32,13 +32,12 @@ public class App {
                 // add the response to the data.json file
                 addToFile(newQuote);
             }
-            else {
-                // read data randomly from data.json file
-                readFromFile();
-            }
+
         } catch (MalformedURLException e) {
+            readFromFile();
             e.printStackTrace();
         } catch (IOException e) {
+            readFromFile();
             e.printStackTrace();
         }
 
